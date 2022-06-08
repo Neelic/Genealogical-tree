@@ -1,21 +1,37 @@
 #ifndef HEADER_H
 #define HEADER_H
-#include <QString>
-#include <QMap>
 
-struct human //Структура, хранящая все родственные связи человека, используется для построе-ния генеалогического древа
-{
+#include <QString>
+#include <QVector>
+#include <QMap>
+#include <QFile>
+#include <QDebug>
+
+class human {
+public:
     QString name;
-    int idParent1;
-    int idParent2;
-    int idGrandParent1;
-    int idGrandParent2;
-    int idGrandParent3;
-    int idGrandParent4;
-    int idSpouse;
-    QVector <int> sibling; //Брат или сеcтра
-    QVector <int> children;
+    QString Parent1;
+    QString Parent2;
+    QString GrandParent1;
+    QString GrandParent2;
+    QString GrandParent3;
+    QString GrandParent4;
+    QString Spouse;
+    QVector <QString> sibling; //Брат или сеcтра
+    QVector <QString> children;
 };
 
-QMap <int, human> allPeople; //Массив, в котором хранятся индекс и ФИО всех людей. Используется для проверки получившегося древа
+QMap <QString, human> allPeople;
+QString familyList;
+
+int testInputData (QString* familyText);
+
+int buildStructScheme(QString* familyText, QString* familyList);
+
+int testLogic();
+
+void completingSchema();
+
+void buildSchemeTree(QString* outputText, QString* familyList);
+
 #endif // HEADER_H
