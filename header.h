@@ -9,16 +9,15 @@
 
 class human {
 public:
-    QString name;
-    QString Parent1;
-    QString Parent2;
-    QString GrandParent1;
-    QString GrandParent2;
-    QString GrandParent3;
-    QString GrandParent4;
-    QString Spouse;
+    QString parent1;
+    QString parent2;
+    QString grandParent1;
+    QString grandParent2;
+    QString grandParent3;
+    QString grandParent4;
     QVector <QString> sibling; //Брат или сеcтра
     QVector <QString> children;
+    QVector <QString> grandChildren;
 };
 
 QMap <QString, human> allPeople;
@@ -28,9 +27,9 @@ int testInputData (QString* familyText);
 
 int buildStructScheme(QString* familyText, QString* familyList);
 
-int testLogic();
+int testLogic(QString* familyList);
 
-void completingSchema();
+void completingSchema(QString* familyList);
 
 void buildSchemeTree(QString* outputText, QString* familyList);
 
