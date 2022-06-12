@@ -61,7 +61,11 @@ int testInputData (QString* familyText) {
             tmpStr = familyText->mid(idOldStr,idNewStr - idOldStr);
         else
             tmpStr = QString(tmpStr + familyText);
-        if (tmpStr.indexOf("\""||"@"||"!"||"#"||"$"||";"||"%"||"^"||":"||"&"||"?"||"*"||"("||")"||"\\"||"'"||"/"||","||"."||"`"||"~") != -1)
+        if (tmpStr.indexOf("\"") != -1 || tmpStr.indexOf("@") != -1 || tmpStr.indexOf("!") != -1 || tmpStr.indexOf("#") != -1 || tmpStr.indexOf("$") != -1
+                || tmpStr.indexOf(";") != -1 || tmpStr.indexOf("%") != -1 || tmpStr.indexOf("^") != -1 || tmpStr.indexOf(":") != -1 || tmpStr.indexOf("&") != -1
+                || tmpStr.indexOf("?") != -1 || tmpStr.indexOf("*") != -1 || tmpStr.indexOf("(") != -1 || tmpStr.indexOf(")") != -1 || tmpStr.indexOf("\\") != -1
+                || tmpStr.indexOf("'") != -1 || tmpStr.indexOf("/") != -1 || tmpStr.indexOf(",") != -1 || tmpStr.indexOf(".") != -1 || tmpStr.indexOf("`") != -1
+                || tmpStr.indexOf("~") != -1)
             return 2;
         if ((tmpStr.split(" ").count()) != 7)
             return 3;
@@ -218,9 +222,9 @@ int buildStructScheme(QString* familyText, QString* familyList) {
                 }
                 tmp.grandChildren << name2;
             }
-                allPeople.insert(name2,tmp1);
-                idOldStr = idNewStr + 2;
-                idNewStr = familyText->indexOf("\r\n",idOldStr);
+        allPeople.insert(name2,tmp1);
+        idOldStr = idNewStr + 2;
+        idNewStr = familyText->indexOf("\r\n",idOldStr);
 
     } while (idNewStr != -1);
 
@@ -234,7 +238,33 @@ int buildStructScheme(QString* familyText, QString* familyList) {
 }
 
 int testLogic(QString* familyList) {
-    return 0;
+    int idStartName = 0;
+    int idEndName = familyList->indexOf("\n");
+    int error = 0;
+    do {
+        human tmp;
+        QString name = familyList->mid(idStartName, idEndName - idStartName);
+        QString patr = name.right(name.length() - name.lastIndexOf(" ") - 1);
+        patr.remove(patr.length() - 3, 3);
+        tmp = allPeople.value(name);
+
+        //Проверка, чтобы у родственников была только уникальная связь
+        error = tmp.humanRepetition(name, &tmp);
+
+        //Проверка отчества у братьев/сестер, если они есть
+        if (!(tmp.sibling.isEmpty()) && error == 0) {
+            for (int i = 0; i < tmp.sibling.count() && error == 0; i++) {
+                QString siblingPatr = tmp.sibling[i].right(tmp.sibling[i].length() - tmp.sibling[i].lastIndexOf(" "));
+                if (!(siblingPatr.contains(patr)))
+                    error = 3;
+            }
+        }
+
+        idStartName = idEndName + 1;
+        idEndName = familyList->indexOf("\n", idStartName);
+    } while (idEndName != -1);
+
+    return error;
 }
 
 void completingSchema(QString* familyList) {
@@ -242,3 +272,4 @@ void completingSchema(QString* familyList) {
 
 void buildSchemeTree(QString* outputText, QString* familyList) {
 }
+
