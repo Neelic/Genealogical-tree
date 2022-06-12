@@ -251,7 +251,24 @@ int testLogic(QString* familyList) {
         //Проверка, чтобы у родственников была только уникальная связь
         error = tmp.humanRepetition(name, &tmp);
 
-        //Проверка имени текущего человека и имени родителей
+        //Проверка отчества текущего человека и имени родителей
+        if (!(tmp.parent1.isEmpty())) {
+            int mis = 0;
+            QString parentName = tmp.parent1.mid(tmp.parent1.indexOf(" "), tmp.parent1.indexOf(" ", tmp.parent1.indexOf(" ") + 1) - tmp.parent1.indexOf(" "));
+            parentName.remove(parentName.length() - 3, 3);
+            if (!(patr.contains(parentName))) {
+                mis = 1;
+                if (tmp.parent2.isEmpty())
+                    mis = 0;
+                if (mis == 1 && !(tmp.parent2.isEmpty())) {
+                    parentName = tmp.parent2.mid(tmp.parent2.indexOf(" "), tmp.parent2.indexOf(" ", tmp.parent2.indexOf(" ") + 1) - tmp.parent2.indexOf(" "));
+                    if (!(patr.contains(parentName)))
+                        mis = 1;
+                }
+            }
+            if (mis == 1)
+                error = 2;
+        }
 
         //Проверка отчества у братьев/сестер, если они есть
         if (!(tmp.sibling.isEmpty()) && error == 0) {
