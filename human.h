@@ -19,6 +19,7 @@ public:
 
     bool repetitionCheck(QString name, QString role, human* tmp);
     bool humanRepetition(QString ownName, human* tmp);
+    void buildingParGrandparfRelation(QString parentPatr,human* other);
 };
 
 #endif // HUMAN_H

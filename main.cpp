@@ -251,6 +251,8 @@ int testLogic(QString* familyList) {
         //Проверка, чтобы у родственников была только уникальная связь
         error = tmp.humanRepetition(name, &tmp);
 
+        //Проверка имени текущего человека и имени родителей
+
         //Проверка отчества у братьев/сестер, если они есть
         if (!(tmp.sibling.isEmpty()) && error == 0) {
             for (int i = 0; i < tmp.sibling.count() && error == 0; i++) {
@@ -268,6 +270,63 @@ int testLogic(QString* familyList) {
 }
 
 void completingSchema(QString* familyList) {
+    int idStartName = 0;
+    int idEndName = familyList->indexOf("\n");
+    do {
+        human tmp;
+        QString name = familyList->mid(idStartName, idEndName - idStartName);
+        QString patr = name.right(name.length() - name.lastIndexOf(" ") - 1);
+        patr.remove(patr.length() - 3, 3);
+        tmp = allPeople.value(name);
+
+        //Достраивание связи родитель - дед
+        if (!(tmp.parent1.isEmpty())) {
+            if (!(tmp.grandParent1.isEmpty())) {
+                human parent = allPeople.value(tmp.parent1);
+                if (!((parent.parent1 == tmp.grandParent1 || parent.parent1 == tmp.grandParent2 || parent.parent1 == tmp.grandParent3 || parent.parent1 == tmp.grandParent4) &&
+                      (parent.parent2 == tmp.grandParent1 || parent.parent2 == tmp.grandParent2 || parent.parent2 == tmp.grandParent3 || parent.parent2 == tmp.grandParent4))) {
+                    QString parentPatr = tmp.parent1.right(tmp.parent1.length() - tmp.parent1.lastIndexOf(" "));
+                    parentPatr.remove(parentPatr.length() - 3, 3);
+                    tmp.buildingParGrandparfRelation(parentPatr, &parent);
+                }
+            }
+        }
+        if (!(tmp.parent2.isEmpty())) {
+            if (!(tmp.grandParent1.isEmpty())) {
+                human parent = allPeople.value(tmp.parent2);
+                if (!(parent.parent1 == tmp.grandParent1 || parent.parent1 == tmp.grandParent2 || parent.parent1 == tmp.grandParent3 || parent.parent1 == tmp.grandParent4) &&
+                      !(parent.parent2 == tmp.grandParent1 || parent.parent2 == tmp.grandParent2 || parent.parent2 == tmp.grandParent3 || parent.parent2 == tmp.grandParent4)) {
+                    QString parentPatr = tmp.parent2.right(tmp.parent2.length() - tmp.parent2.lastIndexOf(" "));
+                    parentPatr.remove(parentPatr.length() - 3, 3);
+                    tmp.buildingParGrandparfRelation(parentPatr, &parent);
+                }
+            }
+        }
+
+        //Достраивание связи "сын" у родителя, если у него нет братьев/сестер текущего человека
+        if (!(tmp.parent1.isEmpty()) && tmp.sibling.count() != 0) {
+            human parent = allPeople.value(tmp.parent1);
+            QString missChild;
+            for (int j = 0; j < tmp.sibling.count(); j++) {
+                int match = 0;
+                for (int i = 0; i < parent.children.count(); i ++) {
+                    if (parent.children[i] == tmp.sibling[j])
+                        match = 1;
+                }
+                if (match == 0)
+                    missChild.insert(missChild.length(), tmp.sibling[j] + "\n");
+            }
+            int idStartNameM = 0;
+            int idEndNameM = missChild.indexOf("\n");
+            while (idEndNameM != -1) {
+                parent.children << missChild.mid(idStartNameM,idEndNameM - idStartNameM);
+                idStartNameM = idEndNameM + 1;
+                idEndNameM = missChild.lastIndexOf("\n", idStartNameM);
+            }
+        }
+        idStartName = idEndName + 1;
+        idEndName = familyList->indexOf("\n", idStartName);
+    } while (idEndName != -1);
 }
 
 void buildSchemeTree(QString* outputText, QString* familyList) {

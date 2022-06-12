@@ -96,3 +96,48 @@ bool human::humanRepetition(QString ownName, human *tmp) {
 
     return repet;
 }
+
+void human::buildingParGrandparfRelation(QString parentPatr, human *other) {
+        QString grandPaName = this->grandParent1.mid(this->grandParent1.indexOf(" "), this->grandParent1.indexOf(" ", this->grandParent1.indexOf(" ") + 1) - this->grandParent1.indexOf(" "));
+        grandPaName.remove(grandPaName.length() - 3, 3);
+        if (parentPatr.contains(grandPaName)) {
+            if (other->parent1.isEmpty()) {
+                other->parent1 = this->grandParent1;
+            } else if (other->parent2.isEmpty()) {
+                other->parent2 = this->grandParent1;
+            }
+        }
+        if (!(this->grandParent2.isEmpty())) {
+            grandPaName = this->grandParent2.mid(this->grandParent2.indexOf(" "), this->grandParent2.indexOf(" ", this->grandParent2.indexOf(" ") + 1) - this->grandParent2.indexOf(" "));
+            grandPaName.remove(grandPaName.length() - 3, 3);
+            if (parentPatr.contains(grandPaName)) {
+                if (other->parent1.isEmpty()) {
+                    other->parent1 = this->grandParent2;
+                } else if (other->parent2.isEmpty()) {
+                    other->parent2 = this->grandParent2;
+                }
+            }
+            if (!(this->grandParent3.isEmpty())) {
+                grandPaName = this->grandParent3.mid(this->grandParent3.indexOf(" "), this->grandParent3.indexOf(" ", this->grandParent3.indexOf(" ") + 1) - this->grandParent3.indexOf(" "));
+                grandPaName.remove(grandPaName.length() - 3, 3);
+                if (parentPatr.contains(grandPaName)) {
+                    if (other->parent1.isEmpty()) {
+                        other->parent1 = this->grandParent3;
+                    } else if (other->parent2.isEmpty()) {
+                        other->parent2 = this->grandParent3;
+                    }
+                }
+                if (!(this->grandParent4.isEmpty())) {
+                    grandPaName = this->grandParent4.mid(this->grandParent4.indexOf(" "), this->grandParent4.indexOf(" ", this->grandParent4.indexOf(" ") + 1) - this->grandParent4.indexOf(" "));
+                    grandPaName.remove(grandPaName.length() - 3, 3);
+                    if (parentPatr.contains(grandPaName)) {
+                        if (other->parent1.isEmpty()) {
+                            other->parent1 = this->grandParent4;
+                        } else if (other->parent2.isEmpty()) {
+                            other->parent2 = this->grandParent4;
+                        }
+                    }
+                }
+            }
+        }
+}
