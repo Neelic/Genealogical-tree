@@ -47,6 +47,16 @@ int main(int argc, char *argv[])
     QString outputText;
     buildSchemeTree(&outputText, &familyList);
 
+    QFile fileOut("Geneological_Tree.dot");
+    fileOut.open(QIODevice::WriteOnly | QIODevice::Text);
+    QTextStream stream(&fileOut);
+    stream << outputText;
+    fileOut.close();
+
+    //Запустить GraphViz
+    //QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+
+
     return 0;
 }
 
@@ -115,20 +125,20 @@ int buildStructScheme(QString* familyText, QString* familyList) {
 
         //Первый человек
         if (kinship == "мать" || kinship == "отец") {
-             int count = tmp.children.count();
-             for (int i = 1; i <= count; i++) {
-                 if (tmp.children[i - 1] == name2)
-                     return 1;
-             }
-             tmp.children << name2;
-        } else if (kinship == "сын" || kinship == "дочь") {
-                if (tmp.parent1.contains(name2) || tmp.parent2.contains(name2))
+            int count = tmp.children.count();
+            for (int i = 1; i <= count; i++) {
+                if (tmp.children[i - 1] == name2)
                     return 1;
-                if (!(tmp.parent1.isEmpty())) {
-                   if (!(tmp.parent2.isEmpty()))
-                      return 2;
-                    else
-                      tmp.parent2 = name2;
+            }
+            tmp.children << name2;
+        } else if (kinship == "сын" || kinship == "дочь") {
+            if (tmp.parent1.contains(name2) || tmp.parent2.contains(name2))
+                return 1;
+            if (!(tmp.parent1.isEmpty())) {
+                if (!(tmp.parent2.isEmpty()))
+                    return 2;
+                else
+                    tmp.parent2 = name2;
             } else
                 tmp.parent1 = name2;
         } else if (kinship == "бабушка" || kinship == "дед" || kinship == "дедушка") {
@@ -139,12 +149,12 @@ int buildStructScheme(QString* familyText, QString* familyList) {
             }
             tmp.grandChildren << name2;
         } else if (kinship == "брат" || kinship == "сестра") {
-                int count = tmp.sibling.count();
-                for (int i = 1; i <= count; i++) {
-                    if (tmp.sibling[i - 1] == name2)
-                        return 1;
-                }
-                tmp.sibling << name2;
+            int count = tmp.sibling.count();
+            for (int i = 1; i <= count; i++) {
+                if (tmp.sibling[i - 1] == name2)
+                    return 1;
+            }
+            tmp.sibling << name2;
         } else if (kinship == "внук" || kinship == "внучка") {
             if (tmp.grandParent1.contains(name2) || tmp.grandParent2.contains(name2) || tmp.grandParent3.contains(name2) || tmp.grandParent4.contains(name2))
                 return 1;
@@ -168,60 +178,60 @@ int buildStructScheme(QString* familyText, QString* familyList) {
         //Второй человек
         human tmp1;
         if (!(allPeople.contains(name2))) {
-                familyList->insert(familyList->lastIndexOf("\n") + 1,name2 + "\n");
-         }
-            else
-                tmp1 = allPeople.value(name2);
+            familyList->insert(familyList->lastIndexOf("\n") + 1,name2 + "\n");
+        }
+        else
+            tmp1 = allPeople.value(name2);
 
-            if (kinship == "мать" || kinship == "отец") {
-                 if (tmp1.parent1.contains(name1) || tmp1.parent2.contains(name1))
-                     return 1;
-                 if (!(tmp1.parent1.isEmpty())) {
-                    if (!(tmp1.parent2.isEmpty()))
-                       return 2;
-                     else
-                       tmp1.parent2 = name1;
-                 } else
-                        tmp1.parent1 = name1;
-                } else if (kinship == "сын" || kinship == "дочь") {
-                    int count = tmp1.children.count();
-                    for (int i = 1; i <= count; i++) {
-                        if (tmp1.children[i - 1] == name1)
-                            return 1;
-                    }
-                    tmp1.children << name1;
-                } else if (kinship == "бабушка" || kinship == "дед" || kinship == "дедушка") {
-                    if (tmp1.grandParent1.contains(name1) || tmp1.grandParent2.contains(name1) || tmp1.grandParent3.contains(name1) || tmp1.grandParent4.contains(name1))
-                        return 1;
-                    if (!(tmp1.grandParent1.isEmpty())) {
-                        if (!(tmp1.grandParent2.isEmpty())) {
-                            if (!(tmp1.grandParent3.isEmpty())) {
-                                if (!(tmp1.grandParent4.isEmpty()))
-                                    return 2;
-                                else
-                                    tmp1.grandParent4 = name1;
-                            } else
-                                tmp1.grandParent3 = name1;
-                        }
-                        else
-                            tmp1.grandParent2 = name1;
-                    } else
-                        tmp1.grandParent1 = name1;
-                } else if (kinship == "брат" || kinship == "сестра") {
-                    int count = tmp1.sibling.count();
-                    for (int i = 1; i <= count; i++) {
-                        if (tmp1.sibling[i - 1] == name2)
-                            return 1;
-                    }
-                    tmp1.sibling << name2;
-                } else if (kinship == "внук" || kinship == "внучка") {
-                int count = tmp.grandChildren.count();
-                for (int i = 1; i <= count; i++) {
-                    if (tmp.grandChildren[i - 1] == name2)
-                        return 1;
-                }
-                tmp.grandChildren << name2;
+        if (kinship == "мать" || kinship == "отец") {
+            if (tmp1.parent1.contains(name1) || tmp1.parent2.contains(name1))
+                return 1;
+            if (!(tmp1.parent1.isEmpty())) {
+                if (!(tmp1.parent2.isEmpty()))
+                    return 2;
+                else
+                    tmp1.parent2 = name1;
+            } else
+                tmp1.parent1 = name1;
+        } else if (kinship == "сын" || kinship == "дочь") {
+            int count = tmp1.children.count();
+            for (int i = 1; i <= count; i++) {
+                if (tmp1.children[i - 1] == name1)
+                    return 1;
             }
+            tmp1.children << name1;
+        } else if (kinship == "бабушка" || kinship == "дед" || kinship == "дедушка") {
+            if (tmp1.grandParent1.contains(name1) || tmp1.grandParent2.contains(name1) || tmp1.grandParent3.contains(name1) || tmp1.grandParent4.contains(name1))
+                return 1;
+            if (!(tmp1.grandParent1.isEmpty())) {
+                if (!(tmp1.grandParent2.isEmpty())) {
+                    if (!(tmp1.grandParent3.isEmpty())) {
+                        if (!(tmp1.grandParent4.isEmpty()))
+                            return 2;
+                        else
+                            tmp1.grandParent4 = name1;
+                    } else
+                        tmp1.grandParent3 = name1;
+                }
+                else
+                    tmp1.grandParent2 = name1;
+            } else
+                tmp1.grandParent1 = name1;
+        } else if (kinship == "брат" || kinship == "сестра") {
+            int count = tmp1.sibling.count();
+            for (int i = 1; i <= count; i++) {
+                if (tmp1.sibling[i - 1] == name2)
+                    return 1;
+            }
+            tmp1.sibling << name2;
+        } else if (kinship == "внук" || kinship == "внучка") {
+            int count = tmp.grandChildren.count();
+            for (int i = 1; i <= count; i++) {
+                if (tmp.grandChildren[i - 1] == name2)
+                    return 1;
+            }
+            tmp.grandChildren << name2;
+        }
         allPeople.insert(name2,tmp1);
         idOldStr = idNewStr + 2;
         idNewStr = familyText->indexOf("\r\n",idOldStr);
@@ -249,12 +259,13 @@ int testLogic(QString* familyList) {
         tmp = allPeople.value(name);
 
         //Проверка, чтобы у родственников была только уникальная связь
-        error = tmp.humanRepetition(name, &tmp);
+        if (tmp.humanRepetition(name, &tmp))
+            error = 3;
 
         //Проверка отчества текущего человека и имени родителей
         if (!(tmp.parent1.isEmpty())) {
             int mis = 0;
-            QString parentName = tmp.parent1.mid(tmp.parent1.indexOf(" "), tmp.parent1.indexOf(" ", tmp.parent1.indexOf(" ") + 1) - tmp.parent1.indexOf(" "));
+            QString parentName = tmp.parent1.mid(tmp.parent1.indexOf(" ") + 1, tmp.parent1.indexOf(" ", tmp.parent1.indexOf(" ") + 1) - tmp.parent1.indexOf(" ") - 1);
             parentName.remove(parentName.length() - 3, 3);
             if (!(patr.contains(parentName))) {
                 mis = 1;
@@ -267,7 +278,7 @@ int testLogic(QString* familyList) {
                 }
             }
             if (mis == 1)
-                error = 2;
+                error = 4;
         }
 
         //Проверка отчества у братьев/сестер, если они есть
@@ -275,7 +286,7 @@ int testLogic(QString* familyList) {
             for (int i = 0; i < tmp.sibling.count() && error == 0; i++) {
                 QString siblingPatr = tmp.sibling[i].right(tmp.sibling[i].length() - tmp.sibling[i].lastIndexOf(" "));
                 if (!(siblingPatr.contains(patr)))
-                    error = 3;
+                    error = 5;
             }
         }
 
@@ -347,5 +358,72 @@ void completingSchema(QString* familyList) {
 }
 
 void buildSchemeTree(QString* outputText, QString* familyList) {
+    outputText->insert(0,"digraph Geneological_Tree {\r\n");
+    int idStartName = 0;
+    int idEndName = familyList->indexOf("\n");
+    do {
+        human tmp;
+        human parent;
+        QString name = familyList->mid(idStartName, idEndName - idStartName);
+        tmp = allPeople.value(name);
+
+        if (!(tmp.parent1.isEmpty())) {
+            if (!(outputText->contains(tmp.parent1 + " -> " + name + " [label=\"Родитель\"];\r\n")))
+                outputText->insert(outputText->length()," " + tmp.parent1 + " -> " + name + " [label=\"Родитель\"];\r\n");
+            parent = allPeople.value(tmp.parent1);
+            bool isMeetGP1, isMeetGP2, isMeetGP3, isMeetGP4;
+            isMeetGP1 = isMeetGP2 = isMeetGP3 = isMeetGP4 = 0;
+            if(!(tmp.grandParent1.isEmpty()) && (tmp.grandParent1 == parent.parent1 || tmp.grandParent1 == parent.parent2))
+                isMeetGP1 = 1;
+            if(!(tmp.grandParent2.isEmpty()) && (tmp.grandParent2 == parent.parent1 || tmp.grandParent2 == parent.parent2))
+                isMeetGP2 = 1;
+            if(!(tmp.grandParent3.isEmpty()) && (tmp.grandParent3 == parent.parent1 || tmp.grandParent3 == parent.parent2))
+                isMeetGP3 = 1;
+            if(!(tmp.grandParent4.isEmpty()) && (tmp.grandParent4 == parent.parent1 || tmp.grandParent4 == parent.parent2))
+                isMeetGP4 = 1;
+            if (!(tmp.parent2.isEmpty())) {
+                if (!(outputText->contains(tmp.parent2 + " -> " + name + " [label=\"Родитель\"];\r\n")))
+                    outputText->insert(outputText->length()," " + tmp.parent2 + " -> " + name + " [label=\"Родитель\"];\r\n");
+                parent = allPeople.value(tmp.parent2);
+                if(!(tmp.grandParent1.isEmpty()) && (tmp.grandParent1 == parent.parent1 || tmp.grandParent1 == parent.parent2))
+                    isMeetGP1 = 1;
+                if(!(tmp.grandParent2.isEmpty()) && (tmp.grandParent2 == parent.parent1 || tmp.grandParent2 == parent.parent2))
+                    isMeetGP2 = 1;
+                if(!(tmp.grandParent3.isEmpty()) && (tmp.grandParent3 == parent.parent1 || tmp.grandParent3 == parent.parent2))
+                    isMeetGP3 = 1;
+                if(!(tmp.grandParent4.isEmpty()) && (tmp.grandParent4 == parent.parent1 || tmp.grandParent4 == parent.parent2))
+                    isMeetGP4 = 1;
+            }
+
+            if (!(isMeetGP1) && !(tmp.grandParent1.isEmpty()) && !(outputText->contains(tmp.grandParent1 + " -> " + name + " [label=\"Прародитель\"];\r\n")))
+                outputText->insert(outputText->length()," " + tmp.grandParent1 + " -> " + name + " [label=\"Прародитель\"];\r\n");
+            if (!(isMeetGP2) && !(tmp.grandParent2.isEmpty()) && !(outputText->contains(tmp.grandParent2 + " -> " + name + " [label=\"Прародитель\"];\r\n")))
+                outputText->insert(outputText->length()," " + tmp.grandParent2 + " -> " + name + " [label=\"Прародитель\"];\r\n");
+            if (!(isMeetGP3) && !(tmp.grandParent3.isEmpty()) && !(outputText->contains(tmp.grandParent3 + " -> " + name + " [label=\"Прародитель\"];\r\n")))
+                outputText->insert(outputText->length()," " + tmp.grandParent3 + " -> " + name + " [label=\"Прародитель\"];\r\n");
+            if (!(isMeetGP4) && !(tmp.grandParent4.isEmpty()) && !(outputText->contains(tmp.grandParent4 + " -> " + name + " [label=\"Прародитель\"];\r\n")))
+                outputText->insert(outputText->length()," " + tmp.grandParent4 + " -> " + name + " [label=\"Прародитель\"];\r\n");
+        } else {
+            if (!(tmp.grandParent1.isEmpty()) && !(outputText->contains(tmp.grandParent1 + " -> " + name + " [label=\"Прародитель\"];\r\n")))
+                outputText->insert(outputText->length()," " + tmp.grandParent1 + " -> " + name + " [label=\"Прародитель\"];\r\n");
+            if (!(tmp.grandParent2.isEmpty()) && !(outputText->contains(tmp.grandParent2 + " -> " + name + " [label=\"Прародитель\"];\r\n")))
+                outputText->insert(outputText->length()," " + tmp.grandParent2 + " -> " + name + " [label=\"Прародитель\"];\r\n");
+            if (!(tmp.grandParent3.isEmpty()) && !(outputText->contains(tmp.grandParent3 + " -> " + name + " [label=\"Прародитель\"];\r\n")))
+                outputText->insert(outputText->length()," " + tmp.grandParent3 + " -> " + name + " [label=\"Прародитель\"];\r\n");
+            if (!(tmp.grandParent4.isEmpty()) && !(outputText->contains(tmp.grandParent4 + " -> " + name + " [label=\"Прародитель\"];\r\n")))
+                outputText->insert(outputText->length()," " + tmp.grandParent4 + " -> " + name + " [label=\"Прародитель\"];\r\n");
+        }
+
+        if (!(tmp.children.isEmpty())) {
+            for (int i=0; i < tmp.children.count(); i++) {
+                if (!(outputText->contains(name + " -> " + tmp.children[i] + " [label=\"Родитель\"];\r\n")))
+                    outputText->insert(outputText->length()," " + name + " -> " + tmp.children[i] + " [label=\"Родитель\"];\r\n");
+            }
+        }
+
+        idStartName = idEndName + 1;
+        idEndName = familyList->indexOf("\n", idStartName);
+    } while (idEndName != -1);
+    outputText->insert(outputText->length(),"}");
 }
 

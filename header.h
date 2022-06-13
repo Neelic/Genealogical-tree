@@ -5,6 +5,8 @@
 #include <QVector>
 #include <QMap>
 #include <QFile>
+#include <QTextStream>
+#include <QProcess>
 #include <QDebug>
 #include "human.h"
 
