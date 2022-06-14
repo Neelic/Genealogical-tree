@@ -1,9 +1,12 @@
 #include <QCoreApplication>
 #include "header.h"
+#include "human.h"
 
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    QMap <QString, human> allPeople;
+    QString familyList;
 
     //Проверка на существование файла
     if (!(QFile::exists(argv[1]))) {
@@ -42,16 +45,16 @@ int main(int argc, char *argv[])
     }
 
     error = 0;
-    error = buildStructScheme(&familyText, &familyList);
+    error = buildStructScheme(&familyText, &familyList, &allPeople);
 
     QString outputText;
-    buildSchemeTree(&outputText, &familyList);
+    buildSchemeTree(&outputText, &familyList, &allPeople);
 
-    QFile fileOut("Geneological_Tree.dot");
-    fileOut.open(QIODevice::WriteOnly | QIODevice::Text);
-    QTextStream stream(&fileOut);
-    stream << outputText;
-    fileOut.close();
+    //QFile fileOut("Geneological_Tree.dot");
+    //fileOut.open(QIODevice::WriteOnly | QIODevice::Text);
+    //QTextStream stream(&fileOut);
+    //stream << outputText;
+    //fileOut.close();
 
     //Запустить GraphViz
     //QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
@@ -82,14 +85,18 @@ int testInputData (QString* familyText) {
         if (!(tmpStr.contains("мать") || tmpStr.contains("отец") || tmpStr.contains("сын") || tmpStr.contains("дочь") || tmpStr.contains("бабушка") || tmpStr.contains("дед") ||
               tmpStr.contains("дедушка") || tmpStr.contains("брат") || tmpStr.contains("сестра") || tmpStr.contains("внук") || tmpStr.contains("внучка")))
             return 4;
-        idOldStr += idNewStr + 2;
+        idOldStr = idNewStr + 2;
         idNewStr = familyText->indexOf("\r\n", idOldStr);
+        if (idNewStr == -1 && idOldStr < familyText->length())
+            idNewStr = familyText->length();
     } while (idNewStr != -1);
     return 0;
 }
 
-int buildStructScheme(QString* familyText, QString* familyList) {
+int buildStructScheme(QString* familyText, QString* familyList, QMap <QString, human>* allPeople) {
     int idNewStr = familyText->indexOf("\r\n");
+    if (idNewStr == -1)
+        idNewStr = familyText->length();
     int idOldStr = 0;
     do {
         int idKinship = familyText->indexOf("мать", idOldStr);
@@ -117,11 +124,11 @@ int buildStructScheme(QString* familyText, QString* familyList) {
         QString name2 = familyText->mid(familyText->indexOf(" ",idKinship) + 1,idNewStr - familyText->indexOf(" ",idKinship) - 1);
         QString kinship = familyText->mid(idKinship, familyText->indexOf(" ", idKinship) - idKinship);
         human tmp;
-        if (!(allPeople.contains(name1))) {
+        if (!(allPeople->contains(name1))) {
             familyList->insert(familyList->lastIndexOf("\n") + 1,name1 + "\n");
         }
         else
-            tmp = allPeople.value(name1);
+            tmp = allPeople->value(name1);
 
         //Первый человек
         if (kinship == "мать" || kinship == "отец") {
@@ -173,15 +180,15 @@ int buildStructScheme(QString* familyText, QString* familyList) {
             } else
                 tmp.grandParent1 = name2;
         }
-        allPeople.insert(name1,tmp);
+        allPeople->insert(name1,tmp);
 
         //Второй человек
         human tmp1;
-        if (!(allPeople.contains(name2))) {
+        if (!(allPeople->contains(name2))) {
             familyList->insert(familyList->lastIndexOf("\n") + 1,name2 + "\n");
         }
         else
-            tmp1 = allPeople.value(name2);
+            tmp1 = allPeople->value(name2);
 
         if (kinship == "мать" || kinship == "отец") {
             if (tmp1.parent1.contains(name1) || tmp1.parent2.contains(name1))
@@ -220,34 +227,35 @@ int buildStructScheme(QString* familyText, QString* familyList) {
         } else if (kinship == "брат" || kinship == "сестра") {
             int count = tmp1.sibling.count();
             for (int i = 1; i <= count; i++) {
-                if (tmp1.sibling[i - 1] == name2)
+                if (tmp1.sibling[i - 1] == name1)
                     return 1;
             }
-            tmp1.sibling << name2;
+            tmp1.sibling << name1;
         } else if (kinship == "внук" || kinship == "внучка") {
             int count = tmp.grandChildren.count();
             for (int i = 1; i <= count; i++) {
-                if (tmp.grandChildren[i - 1] == name2)
+                if (tmp.grandChildren[i - 1] == name1)
                     return 1;
             }
-            tmp.grandChildren << name2;
+            tmp1.grandChildren << name1;
         }
-        allPeople.insert(name2,tmp1);
+        allPeople->insert(name2,tmp1);
         idOldStr = idNewStr + 2;
         idNewStr = familyText->indexOf("\r\n",idOldStr);
-
+        if (idNewStr == -1 && idOldStr < familyText->length())
+            idNewStr = familyText->length();
     } while (idNewStr != -1);
 
     int error = 0;
-    error = testLogic(familyList);
+    error = testLogic(familyList, allPeople);
 
     if (error == 0)
-        completingSchema(familyList);
+        completingSchema(familyList,allPeople);
 
-    return 0;
+    return error;
 }
 
-int testLogic(QString* familyList) {
+int testLogic(QString* familyList, QMap <QString, human>* allPeople) {
     int idStartName = 0;
     int idEndName = familyList->indexOf("\n");
     int error = 0;
@@ -256,12 +264,10 @@ int testLogic(QString* familyList) {
         QString name = familyList->mid(idStartName, idEndName - idStartName);
         QString patr = name.right(name.length() - name.lastIndexOf(" ") - 1);
         patr.remove(patr.length() - 3, 3);
-        tmp = allPeople.value(name);
-
+        tmp = allPeople->value(name);
         //Проверка, чтобы у родственников была только уникальная связь
         if (tmp.humanRepetition(name, &tmp))
             error = 3;
-
         //Проверка отчества текущего человека и имени родителей
         if (!(tmp.parent1.isEmpty())) {
             int mis = 0;
@@ -273,20 +279,22 @@ int testLogic(QString* familyList) {
                     mis = 0;
                 if (mis == 1 && !(tmp.parent2.isEmpty())) {
                     parentName = tmp.parent2.mid(tmp.parent2.indexOf(" "), tmp.parent2.indexOf(" ", tmp.parent2.indexOf(" ") + 1) - tmp.parent2.indexOf(" "));
-                    if (!(patr.contains(parentName)))
-                        mis = 1;
+                    if (patr.contains(parentName))
+                        mis = 0;
                 }
             }
             if (mis == 1)
                 error = 4;
         }
-
-        //Проверка отчества у братьев/сестер, если они есть
+        //Проверка отчества и проверка на разных родителей у братьев/сестер, если они есть
         if (!(tmp.sibling.isEmpty()) && error == 0) {
             for (int i = 0; i < tmp.sibling.count() && error == 0; i++) {
                 QString siblingPatr = tmp.sibling[i].right(tmp.sibling[i].length() - tmp.sibling[i].lastIndexOf(" "));
                 if (!(siblingPatr.contains(patr)))
                     error = 5;
+                human sibl = allPeople->value(tmp.sibling[i]);
+                if (tmp.parent1 != sibl.parent1 && tmp.parent1 != sibl.parent2 && tmp.parent2 != sibl.parent1 && tmp.parent2 != sibl.parent2)
+                    error = 6;
             }
         }
 
@@ -297,7 +305,7 @@ int testLogic(QString* familyList) {
     return error;
 }
 
-void completingSchema(QString* familyList) {
+void completingSchema(QString* familyList, QMap <QString, human>* allPeople) {
     int idStartName = 0;
     int idEndName = familyList->indexOf("\n");
     do {
@@ -305,35 +313,37 @@ void completingSchema(QString* familyList) {
         QString name = familyList->mid(idStartName, idEndName - idStartName);
         QString patr = name.right(name.length() - name.lastIndexOf(" ") - 1);
         patr.remove(patr.length() - 3, 3);
-        tmp = allPeople.value(name);
+        tmp = allPeople->value(name);
 
         //Достраивание связи родитель - дед
         if (!(tmp.parent1.isEmpty())) {
             if (!(tmp.grandParent1.isEmpty())) {
-                human parent = allPeople.value(tmp.parent1);
-                if (!((parent.parent1 == tmp.grandParent1 || parent.parent1 == tmp.grandParent2 || parent.parent1 == tmp.grandParent3 || parent.parent1 == tmp.grandParent4) &&
-                      (parent.parent2 == tmp.grandParent1 || parent.parent2 == tmp.grandParent2 || parent.parent2 == tmp.grandParent3 || parent.parent2 == tmp.grandParent4))) {
+                human parent = allPeople->value(tmp.parent1);
+                if (!(!(parent.parent1.isEmpty()) && (parent.parent1 == tmp.grandParent1 || parent.parent1 == tmp.grandParent2 || parent.parent1 == tmp.grandParent3 || parent.parent1 == tmp.grandParent4)) &&
+                      !(!(parent.parent1.isEmpty()) && (parent.parent2 == tmp.grandParent1 || parent.parent2 == tmp.grandParent2 || parent.parent2 == tmp.grandParent3 || parent.parent2 == tmp.grandParent4))) {
                     QString parentPatr = tmp.parent1.right(tmp.parent1.length() - tmp.parent1.lastIndexOf(" "));
                     parentPatr.remove(parentPatr.length() - 3, 3);
                     tmp.buildingParGrandparfRelation(parentPatr, &parent);
+                    allPeople->insert(tmp.parent1, parent);
                 }
             }
         }
         if (!(tmp.parent2.isEmpty())) {
             if (!(tmp.grandParent1.isEmpty())) {
-                human parent = allPeople.value(tmp.parent2);
+                human parent = allPeople->value(tmp.parent2);
                 if (!(parent.parent1 == tmp.grandParent1 || parent.parent1 == tmp.grandParent2 || parent.parent1 == tmp.grandParent3 || parent.parent1 == tmp.grandParent4) &&
                       !(parent.parent2 == tmp.grandParent1 || parent.parent2 == tmp.grandParent2 || parent.parent2 == tmp.grandParent3 || parent.parent2 == tmp.grandParent4)) {
                     QString parentPatr = tmp.parent2.right(tmp.parent2.length() - tmp.parent2.lastIndexOf(" "));
                     parentPatr.remove(parentPatr.length() - 3, 3);
                     tmp.buildingParGrandparfRelation(parentPatr, &parent);
+                    allPeople->insert(tmp.parent1, parent);
                 }
             }
         }
 
         //Достраивание связи "сын" у родителя, если у него нет братьев/сестер текущего человека
         if (!(tmp.parent1.isEmpty()) && tmp.sibling.count() != 0) {
-            human parent = allPeople.value(tmp.parent1);
+            human parent = allPeople->value(tmp.parent1);
             QString missChild;
             for (int j = 0; j < tmp.sibling.count(); j++) {
                 int match = 0;
@@ -351,13 +361,63 @@ void completingSchema(QString* familyList) {
                 idStartNameM = idEndNameM + 1;
                 idEndNameM = missChild.lastIndexOf("\n", idStartNameM);
             }
+
+            allPeople->insert(tmp.parent1, parent);
+
+            for (int i = 0; i < tmp.sibling.count(); i++) {
+                human sibling;
+                sibling = allPeople->value(tmp.sibling[i]);
+                if (tmp.parent1 != sibling.parent1 || tmp.parent1 != sibling.parent2) {
+                    if (!(sibling.parent1.isEmpty()))
+                        sibling.parent2 = tmp.parent1;
+                    else
+                        sibling.parent1 = tmp.parent1;
+                    allPeople->insert(tmp.sibling[i], sibling);
+                }
+            }
+
+            if (!(tmp.parent2.isEmpty()) && tmp.sibling.count() != 0) {
+                human parent = allPeople->value(tmp.parent2);
+                QString missChild;
+                for (int j = 0; j < tmp.sibling.count(); j++) {
+                    int match = 0;
+                    for (int i = 0; i < parent.children.count(); i ++) {
+                        if (parent.children[i] == tmp.sibling[j])
+                            match = 1;
+                    }
+                    if (match == 0)
+                        missChild.insert(missChild.length(), tmp.sibling[j] + "\n");
+                }
+                int idStartNameM = 0;
+                int idEndNameM = missChild.indexOf("\n");
+                while (idEndNameM != -1) {
+                    parent.children << missChild.mid(idStartNameM,idEndNameM - idStartNameM);
+                    idStartNameM = idEndNameM + 1;
+                    idEndNameM = missChild.lastIndexOf("\n", idStartNameM);
+                }
+
+                allPeople->insert(tmp.parent2, parent);
+
+                for (int i = 0; i < tmp.sibling.count(); i++) {
+                    human sibling;
+                    sibling = allPeople->value(tmp.sibling[i]);
+                    if (tmp.parent2 != sibling.parent1 || tmp.parent2 != sibling.parent2) {
+                        if (!(sibling.parent1.isEmpty()))
+                            sibling.parent2 = tmp.parent1;
+                        else
+                            sibling.parent1 = tmp.parent2;
+                        allPeople->insert(tmp.sibling[i], sibling);
+                    }
+                }
+            }
         }
+
         idStartName = idEndName + 1;
         idEndName = familyList->indexOf("\n", idStartName);
     } while (idEndName != -1);
 }
 
-void buildSchemeTree(QString* outputText, QString* familyList) {
+void buildSchemeTree(QString* outputText, QString* familyList, QMap <QString, human>* allPeople) {
     outputText->insert(0,"digraph Geneological_Tree {\r\n");
     int idStartName = 0;
     int idEndName = familyList->indexOf("\n");
@@ -365,12 +425,12 @@ void buildSchemeTree(QString* outputText, QString* familyList) {
         human tmp;
         human parent;
         QString name = familyList->mid(idStartName, idEndName - idStartName);
-        tmp = allPeople.value(name);
+        tmp = allPeople->value(name);
 
         if (!(tmp.parent1.isEmpty())) {
             if (!(outputText->contains(tmp.parent1 + " -> " + name + " [label=\"Родитель\"];\r\n")))
                 outputText->insert(outputText->length()," " + tmp.parent1 + " -> " + name + " [label=\"Родитель\"];\r\n");
-            parent = allPeople.value(tmp.parent1);
+            parent = allPeople->value(tmp.parent1);
             bool isMeetGP1, isMeetGP2, isMeetGP3, isMeetGP4;
             isMeetGP1 = isMeetGP2 = isMeetGP3 = isMeetGP4 = 0;
             if(!(tmp.grandParent1.isEmpty()) && (tmp.grandParent1 == parent.parent1 || tmp.grandParent1 == parent.parent2))
@@ -384,7 +444,7 @@ void buildSchemeTree(QString* outputText, QString* familyList) {
             if (!(tmp.parent2.isEmpty())) {
                 if (!(outputText->contains(tmp.parent2 + " -> " + name + " [label=\"Родитель\"];\r\n")))
                     outputText->insert(outputText->length()," " + tmp.parent2 + " -> " + name + " [label=\"Родитель\"];\r\n");
-                parent = allPeople.value(tmp.parent2);
+                parent = allPeople->value(tmp.parent2);
                 if(!(tmp.grandParent1.isEmpty()) && (tmp.grandParent1 == parent.parent1 || tmp.grandParent1 == parent.parent2))
                     isMeetGP1 = 1;
                 if(!(tmp.grandParent2.isEmpty()) && (tmp.grandParent2 == parent.parent1 || tmp.grandParent2 == parent.parent2))
@@ -426,4 +486,3 @@ void buildSchemeTree(QString* outputText, QString* familyList) {
     } while (idEndName != -1);
     outputText->insert(outputText->length(),"}");
 }
-

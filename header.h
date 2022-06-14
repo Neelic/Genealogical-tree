@@ -10,18 +10,14 @@
 #include <QDebug>
 #include "human.h"
 
-QMap <QString, human> allPeople;
-
-QString familyList;
-
 int testInputData (QString* familyText);
 
-int buildStructScheme(QString* familyText, QString* familyList);
+int buildStructScheme(QString* familyText, QString* familyList, QMap <QString, human>* allPeople);
 
-int testLogic(QString* familyList);
+int testLogic(QString* familyList, QMap <QString, human>* allPeople);
 
-void completingSchema(QString* familyList);
+void completingSchema(QString* familyList, QMap <QString, human>* allPeople);
 
-void buildSchemeTree(QString* outputText, QString* familyList);
+void buildSchemeTree(QString* outputText, QString* familyList, QMap <QString, human>* allPeople);
 
 #endif // HEADER_H
