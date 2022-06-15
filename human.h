@@ -3,7 +3,7 @@
 #include <QString>
 #include <QVector>
 #include <QMap>
-
+//! Класс со всеми поддерживаемыми родственными связями
 class human
 {
 public:
